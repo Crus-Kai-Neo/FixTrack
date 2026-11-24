@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { getPool } = require('./config/database');
 
 const app = express();
 
@@ -18,6 +19,25 @@ app.get('/api/health', (req, res) => {
       timestamp: new Date().toISOString()
     }
   });
+});
+
+// Database health-check endpoint
+app.get('/api/health/db', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query('SELECT 1 AS dbCheck');
+    res.status(200).json({
+      success: true,
+      message: 'SQL Server connection successful',
+      data: result.recordset[0]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'SQL Server connection failed',
+      error: error.message
+    });
+  }
 });
 
 // 404 handler for unknown routes

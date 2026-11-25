@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { getPool } = require('./config/database');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -9,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health-check endpoint
+// Health-check endpoints
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -21,7 +22,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Database health-check endpoint
 app.get('/api/health/db', async (req, res) => {
   try {
     const pool = await getPool();
@@ -39,6 +39,9 @@ app.get('/api/health/db', async (req, res) => {
     });
   }
 });
+
+// API Routes
+app.use('/api/auth', authRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

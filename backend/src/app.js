@@ -5,6 +5,7 @@ const authRoutes = require('./routes/authRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const requestRoutes = require('./routes/requestRoutes');
 const estimateRoutes = require('./routes/estimateRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/estimates', estimateRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

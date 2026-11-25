@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { getPool } = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
+const shopRoutes = require('./routes/shopRoutes');
+const requestRoutes = require('./routes/requestRoutes');
 
 const app = express();
 
@@ -42,6 +44,8 @@ app.get('/api/health/db', async (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/shops', shopRoutes);
+app.use('/api/requests', requestRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

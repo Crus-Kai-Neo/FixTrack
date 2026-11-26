@@ -1,16 +1,9 @@
-const crypto = require('crypto');
 const {
   requestRepository,
   shopRepository,
   notificationRepository
 } = require('../repositories');
 const { REQUEST_STATUS } = require('../models/constants');
-
-function generateReferenceNumber() {
-  const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const randomPart = crypto.randomBytes(3).toString('hex').toUpperCase();
-  return `FT-${datePart}-${randomPart}`;
-}
 
 const requestService = {
   async createRequest(customerId, { shop_id, device_type, device_model, problem_description }) {
@@ -21,25 +14,13 @@ const requestService = {
       throw error;
     }
 
-    const referenceNumber = generateReferenceNumber();
-
-    const createdRequest = await requestRepository.create({
-      referenceNumber,
+    return requestRepository.create({
       customerId,
       shopId: shop_id,
       deviceType: device_type.trim(),
       deviceModel: device_model.trim(),
       problemDescription: problem_description.trim()
     });
-
-    // Notify the shop owner about the new repair request
-    await notificationRepository.create({
-      userId: shop.owner_user_id,
-      requestId: createdRequest.request_id,
-      message: `New repair request (${referenceNumber}) received for ${createdRequest.device_type} - ${createdRequest.device_model}.`
-    });
-
-    return createdRequest;
   },
 
   async getCustomerRequests(customerId) {
@@ -112,7 +93,6 @@ const requestService = {
 
     const updatedRequest = await requestRepository.updateStatus(requestId, newStatus);
 
-    // Notify the customer about the status decision
     await notificationRepository.create({
       userId: request.customer_id,
       requestId: request.request_id,

@@ -21,8 +21,8 @@ const estimateService = {
       throw error;
     }
 
-    if (request.request_status !== REQUEST_STATUS.ACCEPTED) {
-      const error = new Error('Estimates can only be sent for accepted repair requests.');
+    if (request.request_status === REQUEST_STATUS.REJECTED) {
+      const error = new Error('Cannot send an estimate for a rejected repair request.');
       error.status = 400;
       throw error;
     }
@@ -34,21 +34,12 @@ const estimateService = {
       throw error;
     }
 
-    const estimate = await estimateRepository.create({
+    return estimateRepository.create({
       requestId: request_id,
       estimatedCost: estimated_cost,
       estimatedCompletionTime: estimated_completion_time.trim(),
       businessNotes: business_notes ? business_notes.trim() : null
     });
-
-    // Notify the customer that an estimate is ready
-    await notificationRepository.create({
-      userId: request.customer_id,
-      requestId: request.request_id,
-      message: `${request.shop_name} sent an estimate of Rs. ${estimated_cost} for request ${request.reference_number}.`
-    });
-
-    return estimate;
   },
 
   async getEstimateByRequestId(requestId, user) {
@@ -105,32 +96,28 @@ const estimateService = {
       throw error;
     }
 
-    const updatedEstimate = await estimateRepository.updateStatus(estimateId, decision);
-    let booking = null;
-
     if (decision === ESTIMATE_STATUS.ACCEPTED) {
-      booking = await bookingRepository.createWithInitialHistory({
-        requestId: estimate.request_id,
-        estimateId: estimate.estimate_id,
-        remarks: 'Customer accepted estimate. Booking confirmed.'
-      });
+      const { booking_id } = await estimateRepository.acceptEstimate(estimateId);
+      const updatedEstimate = await estimateRepository.findById(estimateId);
+      const booking = await bookingRepository.findById(booking_id);
 
-      await notificationRepository.create({
-        userId: estimate.shop_owner_id,
-        requestId: estimate.request_id,
-        message: `Customer accepted your estimate for ${estimate.reference_number}. Booking #${booking.booking_id} is now confirmed.`
-      });
-    } else {
-      await notificationRepository.create({
-        userId: estimate.shop_owner_id,
-        requestId: estimate.request_id,
-        message: `Customer rejected your estimate for ${estimate.reference_number}.`
-      });
+      return {
+        estimate: updatedEstimate,
+        booking
+      };
     }
+
+    const updatedEstimate = await estimateRepository.updateStatus(estimateId, ESTIMATE_STATUS.REJECTED);
+
+    await notificationRepository.create({
+      userId: estimate.shop_owner_id,
+      requestId: estimate.request_id,
+      message: `Customer rejected your estimate for ${estimate.reference_number}.`
+    });
 
     return {
       estimate: updatedEstimate,
-      booking
+      booking: null
     };
   }
 };

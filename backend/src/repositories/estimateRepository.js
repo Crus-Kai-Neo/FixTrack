@@ -5,16 +5,24 @@ const estimateRepository = {
     const pool = await getPool();
     const result = await pool
       .request()
-      .input('requestId', sql.Int, requestId)
-      .input('estimatedCost', sql.Decimal(10, 2), estimatedCost)
-      .input('estimatedCompletionTime', sql.NVarChar(80), estimatedCompletionTime)
-      .input('businessNotes', sql.NVarChar(500), businessNotes || null)
-      .query(`
-        INSERT INTO dbo.Estimates (request_id, estimated_cost, estimated_completion_time, business_notes)
-        OUTPUT INSERTED.*
-        VALUES (@requestId, @estimatedCost, @estimatedCompletionTime, @businessNotes)
-      `);
-    return result.recordset[0];
+      .input('request_id', sql.Int, requestId)
+      .input('estimated_cost', sql.Decimal(10, 2), estimatedCost)
+      .input('estimated_completion_time', sql.NVarChar(80), estimatedCompletionTime)
+      .input('business_notes', sql.NVarChar(500), businessNotes || null)
+      .execute('dbo.sp_SendEstimate');
+
+    const { estimate_id } = result.recordset[0];
+    return this.findById(estimate_id);
+  },
+
+  async acceptEstimate(estimateId) {
+    const pool = await getPool();
+    const result = await pool
+      .request()
+      .input('estimate_id', sql.Int, estimateId)
+      .execute('dbo.sp_AcceptEstimate');
+
+    return result.recordset[0]; // { booking_id }
   },
 
   async findById(estimateId) {

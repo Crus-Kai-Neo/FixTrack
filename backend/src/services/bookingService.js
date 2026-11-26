@@ -1,7 +1,6 @@
 const {
   bookingRepository,
-  shopRepository,
-  notificationRepository
+  shopRepository
 } = require('../repositories');
 const { REPAIR_STATUS, REPAIR_STATUS_FLOW } = require('../models/constants');
 
@@ -85,13 +84,6 @@ const bookingService = {
       repair_status,
       remarks ? remarks.trim() : `Status updated to ${repair_status}.`
     );
-
-    // Notify the customer about the repair progress
-    await notificationRepository.create({
-      userId: booking.customer_id,
-      requestId: booking.request_id,
-      message: `Repair status for ${booking.reference_number} is now '${repair_status}'.`
-    });
 
     const statusHistory = await bookingRepository.getStatusHistory(bookingId);
 

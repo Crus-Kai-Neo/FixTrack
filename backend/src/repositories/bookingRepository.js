@@ -1,43 +1,6 @@
 const { sql, getPool } = require('../config/database');
-const { REPAIR_STATUS } = require('../models/constants');
 
 const bookingRepository = {
-  async createWithInitialHistory({ requestId, estimateId, remarks = 'Booking confirmed and device awaiting drop-off' }) {
-    const pool = await getPool();
-    const transaction = new sql.Transaction(pool);
-
-    try {
-      await transaction.begin();
-
-      const bookingResult = await new sql.Request(transaction)
-        .input('requestId', sql.Int, requestId)
-        .input('estimateId', sql.Int, estimateId)
-        .input('initialStatus', sql.VarChar(20), REPAIR_STATUS.RECEIVED)
-        .query(`
-          INSERT INTO dbo.Bookings (request_id, estimate_id, current_repair_status)
-          OUTPUT INSERTED.*
-          VALUES (@requestId, @estimateId, @initialStatus)
-        `);
-
-      const booking = bookingResult.recordset[0];
-
-      await new sql.Request(transaction)
-        .input('bookingId', sql.Int, booking.booking_id)
-        .input('status', sql.VarChar(20), REPAIR_STATUS.RECEIVED)
-        .input('remarks', sql.NVarChar(300), remarks)
-        .query(`
-          INSERT INTO dbo.Repair_Status_History (booking_id, status, remarks)
-          VALUES (@bookingId, @status, @remarks)
-        `);
-
-      await transaction.commit();
-      return booking;
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  },
-
   async findById(bookingId) {
     const pool = await getPool();
     const result = await pool
@@ -119,42 +82,14 @@ const bookingRepository = {
 
   async updateStatusWithHistory(bookingId, status, remarks = null) {
     const pool = await getPool();
-    const transaction = new sql.Transaction(pool);
+    await pool
+      .request()
+      .input('booking_id', sql.Int, bookingId)
+      .input('new_status', sql.VarChar(20), status)
+      .input('remarks', sql.NVarChar(300), remarks)
+      .execute('dbo.sp_UpdateRepairStatus');
 
-    try {
-      await transaction.begin();
-
-      const updateResult = await new sql.Request(transaction)
-        .input('bookingId', sql.Int, bookingId)
-        .input('status', sql.VarChar(20), status)
-        .query(`
-          UPDATE dbo.Bookings
-          SET current_repair_status = @status
-          OUTPUT INSERTED.*
-          WHERE booking_id = @bookingId
-        `);
-
-      const updatedBooking = updateResult.recordset[0] || null;
-      if (!updatedBooking) {
-        await transaction.rollback();
-        return null;
-      }
-
-      await new sql.Request(transaction)
-        .input('bookingId', sql.Int, bookingId)
-        .input('status', sql.VarChar(20), status)
-        .input('remarks', sql.NVarChar(300), remarks)
-        .query(`
-          INSERT INTO dbo.Repair_Status_History (booking_id, status, remarks)
-          VALUES (@bookingId, @status, @remarks)
-        `);
-
-      await transaction.commit();
-      return updatedBooking;
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    return this.findById(bookingId);
   },
 
   async getStatusHistory(bookingId) {

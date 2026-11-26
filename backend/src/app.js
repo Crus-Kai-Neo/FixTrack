@@ -7,6 +7,7 @@ const requestRoutes = require('./routes/requestRoutes');
 const estimateRoutes = require('./routes/estimateRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/estimates', estimateRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

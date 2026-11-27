@@ -19,8 +19,10 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: AppColors.textDark,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
           color: AppColors.textDark,
@@ -32,7 +34,7 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surface,
         contentPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintStyle: const TextStyle(color: AppColors.textMuted),
         border: inputBorder,
         enabledBorder: inputBorder,

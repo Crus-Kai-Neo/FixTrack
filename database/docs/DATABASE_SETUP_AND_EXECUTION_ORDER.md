@@ -5,7 +5,7 @@
 * **Management Tool:** SQL Server Management Studio (SSMS)
 * **Server Configuration (Required for Node.js):**
   1. Enable **Mixed Mode Authentication** (SQL Server and Windows Authentication mode) in Server Properties $\rightarrow$ Security.
-  2. Enable **TCP/IP** on static Port **`1433`** in SQL Server Configuration Manager $\rightarrow$ Protocols for `SQLEXPRESS` $\rightarrow$ IPAll.
+  2. Enable **TCP/IP** on static Port **`1433`]()** in SQL Server Configuration Manager $\rightarrow$ Protocols for `SQLEXPRESS` $\rightarrow$ IPAll.
   3. Restart the **SQL Server (`SQLEXPRESS`)** service.
 
 ## 2. Script Execution Order
